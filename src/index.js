@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import OrbitControls from 'three-orbitcontrols';
 import OBJLoader from 'three-obj-loader';
 OBJLoader(THREE);
+import fillLoader from './loaderHelper';
 
 class App {
   constructor() {
@@ -57,13 +58,13 @@ class App {
         this.scene.add(robot);
         this.robotLoaded = true;
       },
-      req => console.log((req.loaded / req.total) * 100 + '% loaded'),
+      req => fillLoader((req.loaded / req.total) * 100),
     );
   };
 
   moveArm = direction => {
     if (this.robotLoaded) {
-      const arm = this.scene.getObjectByName('robot', true).children[2];
+      const arm = this.scene.getObjectByName('Robot Head__Axis_1_ Arm_1__Axis_2_');
       switch (direction) {
         case 'up':
           arm.position.y += 1;
