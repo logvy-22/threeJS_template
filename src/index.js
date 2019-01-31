@@ -1,23 +1,19 @@
 import * as THREE from 'three';
 import OrbitControls from 'three-orbitcontrols';
 import FBXLoader from 'three-fbx-loader';
+import * as listeners from './listeners';
 
 class App {
   constructor() {
     this.renderer = new THREE.WebGLRenderer();
     this.scene = new THREE.Scene();
-    // this.camera = new THREE.PerspectiveCamera(
-    //   75,
-    //   this.renderer.domElement.width / this.renderer.domElement.height,
-    //   0.001,
-    //   1000,
-    // );
     this.cameras = {
       TOP_VIEW: this.createBaseCamera('TOP_VIEW'),
+      FRONT_VIEW: this.createBaseCamera('FRONT_VIEW'),
+      PERSPECTIVE_VIEW: this.createBaseCamera('PERSPECTIVE_VIEW'),
     };
     this.camera = this.cameras.TOP_VIEW;
     this.orbitControls = new OrbitControls(this.camera);
-    this.scene.add(this.camera);
   }
 
   initScene = () => {
@@ -25,19 +21,14 @@ class App {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
 
-    // this.addGridHelper(100, 10);
-    // this.addAxesHelper(50);
-
     const light = new THREE.AmbientLight(0xffffff);
     const lightPoint = new THREE.PointLight(0xffffff, 0.5);
     lightPoint.position.set(0, 200, -350);
     this.scene.add(light, lightPoint);
 
-    // this.camera.position.set(0, 150, -300);
-    // this.camera.lookAt(0, 0, 0);
     this.camera.add(new THREE.PointLight(0xffffff, 0.5));
 
-    window.addEventListener('resize', this.onWindowResize);
+    // window.addEventListener('resize', this.onWindowResize);
     this.onWindowResize();
 
     this.loadRobot();
@@ -46,7 +37,7 @@ class App {
   };
 
   createBaseCamera = view => {
-    const camera = new THREE.OrthographicCamera(
+    const orthographicCamera = new THREE.OrthographicCamera(
       this.renderer.domElement.width / -2,
       this.renderer.domElement.width / 2,
       this.renderer.domElement.height / 2,
@@ -54,23 +45,50 @@ class App {
       1,
       1000,
     );
+
+    const perspectiveCamera = new THREE.PerspectiveCamera(
+      75,
+      this.renderer.width / this.renderer.height,
+      0.001,
+      1000,
+    );
+
     switch (view) {
       case 'TOP_VIEW':
-        camera.position.set(0, 500, 0);
+        orthographicCamera.position.set(0, 500, 0);
+        return orthographicCamera;
+      case 'FRONT_VIEW':
+        orthographicCamera.position.set(0, 0, -300);
+        return orthographicCamera;
+      case 'PERSPECTIVE_VIEW':
+        perspectiveCamera.position.set(0, 0, 300);
+        return perspectiveCamera;
     }
-
-    camera.lookAt(0, 0, 0);
-    this.scene.add(camera);
-    return camera;
   };
 
   switchCamera = cameraType => {
     switch (cameraType) {
       case 'TOP_VIEW':
         this.camera = this.cameras.TOP_VIEW;
+        this.camera.name = 'Top view';
+        this.orbitControls.camera = this.camera;
+        console.log(this.orbitControls);
+        break;
       case 'FRONT_VIEW':
         this.camera = this.cameras.FRONT_VIEW;
+        this.camera.name = 'Front view';
+        this.orbitControls.camera = this.camera;
+        console.log(this.orbitControls);
+        break;
+      case 'PERSPECTIVE_VIEW':
+        this.camera = this.cameras.PERSPECTIVE_VIEW;
+        this.camera.name = 'Perspective view';
+        this.orbitControls.camera = this.camera;
+        console.log(this.orbitControls);
+        break;
     }
+    this.camera.lookAt(0, 0, 0);
+    this.scene.add(this.camera);
   };
 
   loadRobot = () => {
@@ -100,7 +118,7 @@ class App {
           child.material.needsUpdate = true;
         }
       });
-      console.log(robot);
+      robot.position.y = -100;
       this.scene.add(robot);
     });
   };
@@ -131,9 +149,13 @@ class App {
   animate = () => {
     requestAnimationFrame(this.animate);
     this.orbitControls.update();
+    this.onWindowResize();
     this.renderer.render(this.scene, this.camera);
   };
 }
 
 const app = new App();
 app.initScene();
+listeners.frontButton.addEventListener('click', () => app.switchCamera('FRONT_VIEW'));
+listeners.topButton.addEventListener('click', () => app.switchCamera('TOP_VIEW'));
+listeners.perspectiveButton.addEventListener('click', () => app.switchCamera('PERSPECTIVE_VIEW'));

@@ -1,3 +1,22 @@
 body, html {
     margin: 0;
 }
+
+.buttons {
+    position: absolute;
+    top: 0;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    height: 80px;
+    justify-content: space-around;
+}
+
+#front, #top {
+    height: 30px;
+    width: 150px;
+    background: none;
+    border: 1px solid #262626;
+    border-radius: 10px;
+    cursor: pointer;
+}
