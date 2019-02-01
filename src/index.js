@@ -1,8 +1,5 @@
 import * as THREE from 'three';
 import OrbitControls from 'three-orbitcontrols';
-import OBJLoader from 'three-obj-loader';
-OBJLoader(THREE);
-import fillLoader from './loaderHelper';
 
 class App {
   constructor() {
@@ -27,6 +24,7 @@ class App {
     lightPoint.position.set(0, 200, 350);
     this.scene.add(light, lightPoint);
     this.camera.add(new THREE.PointLight(0xffffff, 0.5));
+    this.scene.add(this.camera);
 
     window.addEventListener('resize', this.onWindowResize);
     this.onWindowResize();
@@ -38,42 +36,56 @@ class App {
     this.scene.add(new THREE.GridHelper(200, 10));
 
     this.onWindowResize();
+    this.createRobot();
 
-    this.robotLoaded = false;
-
-    this.loadRobot();
     this.animate();
   };
 
-  loadRobot = () => {
-    const objLoader = new THREE.OBJLoader();
-    const material = new THREE.MeshLambertMaterial({ color: 0x8ea6b7 });
-    objLoader.load(
-      '../OBJ_Robot.obj',
-      robot => {
-        robot.name = 'robot';
-        robot.traverse(child => {
-          if (child.isMesh) child.material = material;
-        });
-        this.scene.add(robot);
-        this.robotLoaded = true;
-      },
-      req => fillLoader((req.loaded / req.total) * 100),
-    );
+  createRobot = () => {
+    const group = new THREE.Group();
+    const armMaterial = new THREE.MeshLambertMaterial({ color: 0x505050 });
+    const jointMaterial = new THREE.MeshLambertMaterial({ color: 0x5d8c96 });
+
+    const group1 = new THREE.Group();
+    group1.name = 'group1';
+
+    const arm1 = new THREE.Mesh(new THREE.BoxGeometry(40, 4, 10), armMaterial);
+    arm1.position.set(-20, 0, 0);
+    arm1.name = 'arm1';
+
+    group1.add(arm1);
+    group.add(group1);
+
+    const group2 = new THREE.Group();
+    group2.name = 'group2';
+
+    const arm2 = new THREE.Mesh(new THREE.BoxGeometry(40, 4, 10), armMaterial);
+    arm2.position.set(-20, 0, 0);
+    arm2.name = 'arm2';
+
+    group2.position.set(0, 0, 0);
+    group2.rotation.z = (-50 * Math.PI) / 180;
+    group2.add(arm2);
+    group1.add(group2);
+
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0, 100, 100), armMaterial);
+
+    const joint = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 11, 24), jointMaterial);
+    joint.rotation.set(0, (90 * Math.PI) / 180, (90 * Math.PI) / 180);
+    joint.name = 'joint';
+    this.scene.add(joint);
+
+    group.name = 'robot';
+    this.scene.add(group);
   };
 
-  moveArm = direction => {
-    if (this.robotLoaded) {
-      const arm = this.scene.getObjectByName('Robot Head__Axis_1_ Arm_1__Axis_2_');
-      switch (direction) {
-        case 'up':
-          arm.position.y += 1;
-          break;
-        case 'down':
-          arm.position.y -= 1;
-          break;
-      }
-    }
+  moveArm = angle => {
+    let currentAngle = this.scene.getObjectByName('group2').rotation.z;
+    if (
+      Math.abs((currentAngle * 180) / Math.PI) + angle >= 50 &&
+      Math.abs((currentAngle * 180) / Math.PI) + angle <= 300
+    )
+      this.scene.getObjectByName('group2').rotation.z += (-angle * Math.PI) / 180;
   };
 
   onWindowResize = () => {
@@ -93,15 +105,15 @@ const app = new App();
 app.initScene();
 
 window.addEventListener('keyup', e => {
-  if (e.keyCode === 38 || e.keyCode === 40) app.orbitControls.enabled = true;
+  if (e.keyCode === 39 || e.keyCode === 37) app.orbitControls.enabled = true;
 });
 
 window.addEventListener('keydown', e => {
-  if (e.keyCode === 38) {
+  if (e.keyCode === 39) {
     app.orbitControls.enabled = false;
-    app.moveArm('up');
-  } else if (e.keyCode === 40) {
+    app.moveArm(1);
+  } else if (e.keyCode === 37) {
     app.orbitControls.enabled = false;
-    app.moveArm('down');
+    app.moveArm(-1);
   } else app.orbitControls.enabled = true;
 });
